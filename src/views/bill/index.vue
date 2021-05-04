@@ -2,8 +2,8 @@
   <div class="bill-wrapper">
     <div class="bill-search">
       <el-row class="search-item">
-        <el-col :span="10">
-          充值状态
+        <el-col :span="7">
+          充值状态&nbsp;
           <el-select v-model="query.isConfirm">
             <el-option v-for="i in Object.keys($options.confirmStatus)"
                        :label="i"
@@ -12,7 +12,7 @@
             </el-option>
           </el-select>
         </el-col>
-        <el-col :span="10">
+        <el-col :span="7">
           付款账号
           <el-input
             v-model="query.paymentAccount"
@@ -20,9 +20,7 @@
             placeholder="请填写付款账号"
           ></el-input>
         </el-col>
-      </el-row>
-      <el-row class="search-item">
-        <el-col :span="10">
+        <el-col :span="7">
           付款订单号
           <el-input
             v-model="query.paymentOrderNo"
@@ -30,8 +28,8 @@
             placeholder="请填写付款订单号"
           ></el-input>
         </el-col>
-        <el-col :span="6">
-          <el-button type="primary">查询</el-button>
+        <el-col :span="3">
+          <el-button type="primary" @click="getList">查询</el-button>
         </el-col>
       </el-row>
     </div>
@@ -47,11 +45,13 @@
         <el-table-column prop="updatedAt" label="审核时间"></el-table-column>
         <el-table-column prop="taskId" label="操作">
           <template slot-scope="scope">
-            <div class="operation" @click="handleDisagree(scope.row)">
-              拒绝
-            </div>
-            <div class="operation" @click="handleAgree(scope.row)">
-              通过
+            <div v-if="scope.row.isConfirm === 0">
+              <el-button size="mini" type="primary" class="operation" @click="handleAgree(scope.row)">
+                通过
+              </el-button>
+              <el-button size="mini" class="operation" @click="handleDisagree(scope.row)">
+                拒绝
+              </el-button>
             </div>
           </template>
         </el-table-column>
@@ -70,6 +70,7 @@
 
 <script>
 import { confirmStatus } from '@/utils/const'
+import { rechargeList, agree, disagree } from '@/api/bill'
 
 export default {
   name: 'index',
@@ -84,30 +85,72 @@ export default {
         paymentAccount: '',
         paymentOrderNo: ''
       },
-      list: [],
+      list: [{ username: 'aaa' }],
       total: 0,
       loading: false
     }
   },
   methods: {
     getList() {
+      this.loading = true
+      rechargeList(this.query).then(res => {
+        this.list = res.data || []
+        this.total = res.count || 0
+      }).finally(_ => {
+        this.loading = false
+      })
     },
-    handleDisagree() {
+    handleDisagree(item) {
+      this.$confirm('确定拒绝本次审核 ?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        disagree(item.id)
+      })
 
     },
-    handleAgree() {
-
+    handleAgree(item) {
+      this.$confirm('确定通过本次审核 ?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        agree(item.id)
+      })
     },
     handleSizeChange(val) {
       this.query.limit = val
     },
     handleCurrentChange(val) {
       this.query.page = val
-    },
+    }
   }
 }
 </script>
 
-<style scoped>
-
+<style lang="scss" scoped>
+.bill-wrapper {
+  padding: 20px 20px;
+  .bill-search {
+    color: #2c3e50;
+    font-size: 14px;
+    .search-item {
+      margin-bottom: 20px;
+      .el-input, .el-select {
+        width: 260px;
+        height: 36px;
+      }
+      .el-button {
+        width: 120px;
+        border-radius: 2px;
+        padding: 9px 15px;
+      }
+    }
+  }
+  .operation {
+    cursor: pointer;
+    margin-right: 5px;
+  }
+}
 </style>

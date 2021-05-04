@@ -1,8 +1,8 @@
 <template>
   <div class="task-wrapper">
-    <div class="task-search">
+    <div class="task-search search-bar">
       <el-row class="search-item">
-        <el-col :span="10">
+        <el-col :span="8">
           店铺名称
           <el-input
             v-model="query.storeName"
@@ -10,9 +10,9 @@
             placeholder="请填写店铺名称"
           ></el-input>
         </el-col>
-        <el-col :span="10">
-          状态
-          <el-select v-model="query.status">
+        <el-col :span="8">
+          订单状态
+          <el-select v-model="query.status" size="medium">
             <el-option v-for="i in Object.keys($options.taskStatus)"
                        :value="i"
                        placeholder="请选择订单状态"
@@ -20,24 +20,27 @@
             </el-option>
           </el-select>
         </el-col>
-      </el-row>
-      <el-row class="search-item">
-        <el-col :span="10">
+        <el-col :span="8">
           产品编号
           <el-input
+            size="medium"
             v-model="query.itemcode"
             placeholder="请填写产品编号"
           ></el-input>
         </el-col>
-        <el-col :span="10">
+      </el-row>
+      <el-row class="search-item">
+        <el-col :span="8">
           订单编号
           <el-input v-model="query.taskId"
+                    size="medium"
                     placeholder="请填订单号">
           </el-input>
         </el-col>
         <el-col :span="10">
           日期时间
           <el-date-picker
+            size="medium"
             v-model="query.date"
             type="daterange"
             range-separator="至"
@@ -61,22 +64,16 @@
         <el-table-column prop="storeName" label="店铺名称"></el-table-column>
         <el-table-column prop="totalAmount" label="任务费用"></el-table-column>
         <el-table-column prop="routeReq" label="任务要求">
-          <template slot-scope="scope">
-            {{ $options.taskOriginRules[scope.row.routeReq] }}
-          </template>
         </el-table-column>
         <el-table-column prop="taskStatus" label="任务状态">
-          <template slot-scope="scope">
-            {{ typeList[scope.row.taskStatus] }}
-          </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="发布时间"></el-table-column>
         <el-table-column label="操作">
           <template slot-scope="scope">
-            <div class="operation" @click="handleViewDetail(scope.row)">
+            <el-button type="primary" size="mini" class="operation" @click="handleViewDetail(scope.row)">
               详情
-            </div>
-            <div class="operation" @click="handleReceive(scope.row)">领取任务</div>
+            </el-button>
+            <el-button type="primary" size="mini" class="operation" @click="handleReceive(scope.row)">领取</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -94,7 +91,7 @@
 
 <script>
 import { taskStatus } from '@/utils/const'
-import { taskList } from '@/api/task'
+import { taskList, receiveTask } from '@/api/task'
 
 export default {
   name: 'index',
@@ -121,7 +118,7 @@ export default {
           this.query.endTime = new Date(maxDate).getTime()
         }
       },
-      list: [],
+      list: [{}],
       total: 0
     }
   },
@@ -142,10 +139,16 @@ export default {
       this.query.page = val
     },
     handleViewDetail(item) {
-
+      this.$router.push({ path: '/taskDetail/index', query: { id: item.id }})
     },
     handleReceive(item) {
-
+      this.$confirm('确定领取本条任务 ?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        receiveTask(item.id)
+      })
     }
   },
   mounted() {
@@ -157,8 +160,22 @@ export default {
 
 <style lang="scss" scoped>
 .task-wrapper {
-  padding: 20px 10px;
+  padding: 20px 20px;
   .task-search {
+    color: #2c3e50;
+    font-size: 14px;
+    .search-item {
+      margin-bottom: 20px;
+      .el-input, .el-select {
+        width: 260px;
+        height: 36px;
+      }
+      .el-button {
+        width: 120px;
+        border-radius: 2px;
+        padding: 9px 15px;
+      }
+    }
   }
   .getTaskList {
     float: right;

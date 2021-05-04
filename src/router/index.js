@@ -67,6 +67,19 @@ export const constantRoutes = [
       }
     ]
   },
+  {
+    path: '/taskDetail',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: 'index',
+        name: 'Task',
+        component: () => import('@/views/task/detail'),
+        meta: { title: '接单管理', icon: 'form' }
+      }
+    ]
+  },
 
   {
     path: '/bill',
