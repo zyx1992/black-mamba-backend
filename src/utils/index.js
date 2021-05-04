@@ -1,3 +1,4 @@
+import JsEncrypt from 'jsencrypt'
 /**
  * Created by PanJiaChen on 16/11/18.
  */
@@ -114,4 +115,14 @@ export function param2Obj(url) {
     }
   })
   return obj
+}
+
+/**
+ * @param {string} rsa， val
+ * @returns {string}
+ */
+export function handleRsaPassword(rsa, val) {
+  let en = new JsEncrypt()
+  en.setPublicKey(rsa)
+  return en.encrypt(val)
 }
