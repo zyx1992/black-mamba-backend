@@ -6,7 +6,8 @@ const getDefaultState = () => {
   return {
     token: getToken(),
     name: '',
-    avatar: ''
+    avatar: '',
+    accessToken: ''
   }
 }
 
@@ -24,6 +25,9 @@ const mutations = {
   },
   SET_AVATAR: (state, avatar) => {
     state.avatar = avatar
+  },
+  SET_ACCESS_TOKEN: (state, token) => {
+    state.accessToken = token
   }
 }
 
@@ -85,7 +89,12 @@ const actions = {
       commit('RESET_STATE')
       resolve()
     })
-  }
+  },
+
+  //  设置token
+  async getAccessToken({ commit }, token) {
+    commit('SET_ACCESS_TOKEN', token)
+  },
 }
 
 export default {

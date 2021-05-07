@@ -30,20 +30,21 @@ module.exports = {
   lintOnSave: process.env.NODE_ENV === 'development',
   productionSourceMap: false,
   devServer: {
+    hot: true,
     port: port,
     open: true,
     overlay: {
       warnings: false,
       errors: true
     },
-    before: require('./mock/mock-server.js')
-    // proxy: {
-    //   '/': {
-    //     target: 'https://dev23.liuzhicong.cn',
-    //     secure: false,
-    //     logLevel: 'debug'
-    //   }
-    // }
+    // before: require('./mock/mock-server.js')
+    proxy: {
+      '/': {
+        target: 'https://dev23.liuzhicong.cn',
+        secure: false,
+        logLevel: 'debug'
+      }
+    }
   },
   configureWebpack: {
     // provide the app's title in webpack's name field, so that

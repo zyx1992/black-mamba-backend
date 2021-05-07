@@ -90,6 +90,9 @@ export default {
       loading: false
     }
   },
+  mounted() {
+    this.getList()
+  },
   methods: {
     getList() {
       this.loading = true

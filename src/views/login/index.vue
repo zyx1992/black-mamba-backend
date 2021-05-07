@@ -52,6 +52,7 @@
 <script>
 import { getUserRsa, singin } from '@/api/common'
 import { handleRsaPassword } from '@/utils/index'
+import { setAccessToken } from '@/utils/accessToken'
 
 export default {
   name: 'Login',
@@ -104,25 +105,23 @@ export default {
       this.$refs.loginForm.validate(async valid => {
         if (valid) {
           this.loading = true
-          // let { signKey } = await getUserRsa({ username: this.loginForm.username })
-          //
-          // this.loginForm.password = encodeURIComponent(
-          //   handleRsaPassword(signKey, this.loginForm.password)
-          // )
-          // singin(this.loginForm)
-          //   .then((res) => {
-          //     this.$message(`欢迎登录${title}`)
-          //     this.$router.push(`/`)
-          //   })
-          //   .finally(() => {
-          //     this.loading = false
-          //   })
-          this.$store.dispatch('user/login', this.loginForm).then(() => {
-            this.$router.push({ path: this.redirect || '/' })
-            this.loading = false
-          }).catch(() => {
-            this.loading = false
-          })
+          let params = Object.assign({}, this.loginForm)
+          let { signKey } = await getUserRsa({ username: this.loginForm.username })
+          params.password = encodeURIComponent(
+            handleRsaPassword(signKey, params.password)
+          )
+          singin(params)
+            .then((res) => {
+              this.$store.dispatch(
+                'user/getAccessToken',
+                res['access_token']
+              )
+              setAccessToken(res['access_token'])
+              this.$router.push(`/dashboard`)
+            })
+            .finally(() => {
+              this.loading = false
+            })
         } else {
           console.log('error submit!!')
           return false
