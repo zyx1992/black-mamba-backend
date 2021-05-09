@@ -85,7 +85,7 @@ export default {
         paymentAccount: '',
         paymentOrderNo: ''
       },
-      list: [{ username: 'aaa' }],
+      list: [],
       total: 0,
       loading: false
     }

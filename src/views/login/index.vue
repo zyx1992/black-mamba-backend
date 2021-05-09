@@ -111,11 +111,13 @@ export default {
             handleRsaPassword(signKey, params.password)
           )
           singin(params)
-            .then((res) => {
+            .then((data) => {
+              let res = data.data || {}
               this.$store.dispatch(
                 'user/getAccessToken',
                 res['access_token']
               )
+              console.log('===res', res)
               setAccessToken(res['access_token'])
               this.$router.push(`/dashboard`)
             })
