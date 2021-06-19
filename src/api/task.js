@@ -5,7 +5,7 @@ export function taskList(params) {
 }
 
 export function taskDetail(id) {
-  return $http.post('/task/detail', { id })
+  return $http.get('/task/detail', { id })
 }
 
 export function changeTaskStatus(params) {

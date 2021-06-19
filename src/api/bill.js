@@ -8,7 +8,7 @@ export function agree(id) {
   })
 }
 export function disagree(id) {
-  return $http.post('/receiver-account/audit/status', {
+  return $http.put('/receiver-account/audit/status', {
     confirm: '2',
     id: String(id)
   })

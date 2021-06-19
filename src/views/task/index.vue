@@ -46,6 +46,7 @@
             range-separator="至"
             value-format="timestamp"
             :picker-options="pickerOptions"
+            @change="timeChange"
             start-placeholder="开始日期"
             end-placeholder="结束日期"
           ></el-date-picker>
@@ -58,7 +59,17 @@
       </el-row>
     </div>
     <div class="task-table">
-      <el-table v-loading="loading" :data="list" border>
+      <el-table v-loading="loading.table"
+                :data="list"
+                :row-key="getRowKeys"
+                :expand-row-keys="expands"
+                @expand-change="handleViewDetail"
+                border>
+        <el-table-column type="expand">
+          <template slot-scope="scope">
+            <detail :detail="detailData" :loading="loading.detail"></detail>
+          </template>
+        </el-table-column>
         <el-table-column prop="taskId" label="任务ID"></el-table-column>
         <el-table-column prop="taskCount" label="任务数量"></el-table-column>
         <el-table-column prop="storeName" label="店铺名称"></el-table-column>
@@ -70,9 +81,6 @@
         <el-table-column prop="createdAt" label="发布时间"></el-table-column>
         <el-table-column label="操作">
           <template slot-scope="scope">
-            <el-button type="primary" size="mini" class="operation" @click="handleViewDetail(scope.row)">
-              详情
-            </el-button>
             <el-button type="primary" size="mini" class="operation" @click="handleReceive(scope.row)">领取</el-button>
           </template>
         </el-table-column>
@@ -91,11 +99,14 @@
 
 <script>
 import { taskStatus } from '@/utils/const'
-import { taskList, receiveTask } from '@/api/task'
-
+import { taskList, receiveTask, taskDetail } from '@/api/task'
+import Detail from './detail'
 export default {
   name: 'index',
   taskStatus,
+  components: {
+    Detail
+  },
   data() {
     return {
       query: {
@@ -111,25 +122,34 @@ export default {
         endTime: ''
 
       },
-      loading: false,
       pickerOptions: {
         onPick: ({ maxDate, minDate }) => {
           this.query.beginTime = new Date(minDate).getTime()
           this.query.endTime = new Date(maxDate).getTime()
         }
       },
-      list: [{}],
-      total: 0
+      list: [],
+      total: 0,
+      detailData: {},
+      getRowKeys(row) {
+        return row.taskId
+      },
+      expands: [],
+      loading: {
+        table: false,
+        detail: false
+      }
     }
   },
   methods: {
     getTaskList() {
-      this.loading = true
+      this.loading.table = true
       taskList(this.query).then(res => {
+        console.log('===res', res)
         this.list = res.data || []
         this.total = res.count || 0
       }).finally(_ => {
-        this.loading = false
+        this.loading.table = false
       })
     },
     handleSizeChange(val) {
@@ -138,8 +158,25 @@ export default {
     handleCurrentChange(val) {
       this.query.page = val
     },
-    handleViewDetail(item) {
-      this.$router.push({ path: '/taskDetail/index', query: { id: item.id }})
+    async handleViewDetail(row, expandedRows) {
+      if(expandedRows.length) {
+        this.expands = []
+        this.expands.push(row.taskId)
+      }else {
+        this.expands = []
+      }
+      let id = row.taskId || ''
+      if (!id) return
+      await this.handleGetDetail(id, row)
+    },
+    handleGetDetail(id) {
+      this.loading.detail = true
+      taskDetail(id)
+        .then((res) => {
+          this.detailData = res.data || {}
+        }).finally(_ => {
+        this.loading.detail = false
+      })
     },
     handleReceive(item) {
       this.$confirm('确定领取本条任务 ?', '提示', {
@@ -149,10 +186,16 @@ export default {
       }).then(() => {
         receiveTask(item.id)
       })
+    },
+    timeChange(val) {
+      if(!val) {
+        this.query.beginTime = ''
+        this.query.endTime = ''
+      }
     }
   },
   mounted() {
-    // this.getTaskList()
+    this.getTaskList()
     console.log(this.$options.taskStatus)
   }
 }

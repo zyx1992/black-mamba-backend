@@ -40,7 +40,9 @@
         <el-table-column prop="paymentAmount" label="充值金额"></el-table-column>
         <el-table-column prop="paymentOrderNo" label="订单号"></el-table-column>
         <el-table-column prop="isConfirm" label="充值状态">
-
+          <template slot-scope="scope">
+            {{scope.row.isConfirm | statusFilter}}
+          </template>
         </el-table-column>
         <el-table-column prop="updatedAt" label="审核时间"></el-table-column>
         <el-table-column prop="taskId" label="操作">
@@ -108,18 +110,19 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(() => {
-        disagree(item.id)
+      }).then(async () => {
+        await disagree(item.id)
+        this.getList()
       })
-
     },
     handleAgree(item) {
       this.$confirm('确定通过本次审核 ?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(() => {
-        agree(item.id)
+      }).then(async () => {
+        await agree(item.id)
+        this.getList()
       })
     },
     handleSizeChange(val) {
@@ -127,6 +130,17 @@ export default {
     },
     handleCurrentChange(val) {
       this.query.page = val
+    }
+  },
+  filters: {
+    statusFilter(status) {
+      let msg = '未知'
+      Object.entries(confirmStatus).map(item => {
+        if(item[1] === status) {
+          msg = item[0]
+        }
+      })
+      return msg
     }
   }
 }
