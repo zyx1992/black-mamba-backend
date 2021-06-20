@@ -44,7 +44,11 @@
             {{scope.row.isConfirm | statusFilter}}
           </template>
         </el-table-column>
-        <el-table-column prop="updatedAt" label="审核时间"></el-table-column>
+        <el-table-column prop="updatedAt" label="审核时间">
+          <template slot-scope="scope">
+            {{scope.row.updatedAt | converTime}}
+          </template>
+        </el-table-column>
         <el-table-column prop="taskId" label="操作">
           <template slot-scope="scope">
             <div v-if="scope.row.isConfirm === 0">

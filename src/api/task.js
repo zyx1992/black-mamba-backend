@@ -9,9 +9,10 @@ export function taskDetail(id) {
 }
 
 export function changeTaskStatus(params) {
-  return $http.post('/receiver-task/status', params)
+  return $http.put('/receiver-task/status', params)
 }
 
 export function receiveTask(id) {
+  console.log('==id', id, typeof id)
   return $http.post(`/receiver-task/${id}`)
 }

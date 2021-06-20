@@ -77,11 +77,18 @@
         <el-table-column prop="routeReq" label="任务要求">
         </el-table-column>
         <el-table-column prop="taskStatus" label="任务状态">
+          <template slot-scope="scope">
+            {{$options.taskStatus[scope.row.taskStatus] || '未知'}}
+          </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="发布时间"></el-table-column>
         <el-table-column label="操作">
           <template slot-scope="scope">
-            <el-button type="primary" size="mini" class="operation" @click="handleReceive(scope.row)">领取</el-button>
+            <el-button v-if="scope.row.taskStatus == 2101" type="primary" size="mini" class="operation"
+                       @click="handleReceive(scope.row)">领取
+            </el-button>
+            <el-button v-else type="success" size="mini" class="operation" @click="handleChangeTask(scope.row)">状态变更
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -94,13 +101,47 @@
         @current-change="handleCurrentChange"
       ></el-pagination>
     </div>
+    <el-dialog
+      v-if="dialogVisible"
+      title="任务状态变更"
+      :before-close="handleClose"
+      :visible.sync="dialogVisible"
+      width="40%">
+      <div class="dialog-status-block">
+        <el-form class="dialog-status-form" :model="task" label-position="left" label-width="120px">
+          <el-form-item label="任务变更状态">
+            <el-select v-model="task.taskStatus">
+              <el-option v-for="key in Object.keys($options.taskStatus)"
+                         :value="key"
+                         :disabled="activeRow.taskStatus == key"
+                         :label="$options.taskStatus[key]"
+              ></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="平台买手订单号">
+            <el-input v-model="task.buyerOrderNo"></el-input>
+          </el-form-item>
+          <el-form-item label="平台买手ID">
+            <el-input v-model="task.buyerId"></el-input>
+          </el-form-item>
+          <el-form-item label="任务备注">
+            <el-input type="textarea" v-model="task.remark"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleChangeStatus" :loading="loading.status">更改</el-button>
+            <el-button @click="handleClose">取消</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { taskStatus } from '@/utils/const'
-import { taskList, receiveTask, taskDetail } from '@/api/task'
+import { taskList, receiveTask, taskDetail, changeTaskStatus } from '@/api/task'
 import Detail from './detail'
+
 export default {
   name: 'index',
   taskStatus,
@@ -122,6 +163,14 @@ export default {
         endTime: ''
 
       },
+      task: {
+        buyerOrderNo: '',
+        taskId: null,
+        taskStatus: '',
+        buyerId: '',
+        remark: ''
+      },
+      activeRow: {},
       pickerOptions: {
         onPick: ({ maxDate, minDate }) => {
           this.query.beginTime = new Date(minDate).getTime()
@@ -137,8 +186,10 @@ export default {
       expands: [],
       loading: {
         table: false,
-        detail: false
-      }
+        detail: false,
+        status: false
+      },
+      dialogVisible: false
     }
   },
   methods: {
@@ -159,10 +210,10 @@ export default {
       this.query.page = val
     },
     async handleViewDetail(row, expandedRows) {
-      if(expandedRows.length) {
+      if (expandedRows.length) {
         this.expands = []
         this.expands.push(row.taskId)
-      }else {
+      } else {
         this.expands = []
       }
       let id = row.taskId || ''
@@ -184,14 +235,42 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        receiveTask(item.id)
+        receiveTask(item.taskId)
       })
     },
     timeChange(val) {
-      if(!val) {
+      if (!val) {
         this.query.beginTime = ''
         this.query.endTime = ''
       }
+    },
+    handleChangeTask(row) {
+      this.dialogVisible = true
+      this.activeRow = row
+    },
+    handleClose() {
+      this.dialogVisible = false
+      this.activeRow = {}
+      this.task = {
+        buyerOrderNo: '',
+        taskId: null,
+        taskStatus: '',
+        buyerId: '',
+        remark: ''
+      }
+    },
+    handleChangeStatus() {
+      this.loading.status = true
+      let params = Object.assign({}, this.task)
+      params.taskId = this.activeRow.taskId
+      params.taskStatus = Number(params.taskStatus)
+      changeTaskStatus(params).then(res => {
+        this.$message.success('任务状态变更成功')
+        this.handleClose()
+        this.getTaskList()
+      }).finally(_ => {
+        this.loading.status = false
+      })
     }
   },
   mounted() {
@@ -225,4 +304,12 @@ export default {
   }
 }
 
+.dialog-status-block {
+  .dialog-status-form {
+    .el-input, .el-textarea, .el-select {
+      width: 400px;
+      height: 48px;
+    }
+  }
+}
 </style>

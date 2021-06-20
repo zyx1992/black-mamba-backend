@@ -11,6 +11,7 @@ import '@/styles/index.scss' // global css
 import App from './App'
 import store from './store'
 import router from './router'
+import Moment from 'moment'
 
 import '@/icons' // icon
 import '@/permission' // permission control
@@ -34,7 +35,9 @@ Vue.use(ElementUI, { locale })
 // Vue.use(ElementUI)
 
 Vue.config.productionTip = false
-
+Vue.filter('converTime',function(data){
+  return Moment(data).format('YYYY-MM-DD HH:mm:ss');
+})
 new Vue({
   el: '#app',
   router,
