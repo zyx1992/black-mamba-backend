@@ -7,16 +7,26 @@
           <el-input
             v-model="query.storeName"
             size="medium"
+            clearable
+            @clear="getTaskList"
+            @keyup.enter.native="getTaskList"
             placeholder="请填写店铺名称"
           ></el-input>
         </el-col>
         <el-col :span="8">
           订单状态
-          <el-select v-model="query.status" size="medium">
+          <el-select v-model="query.taskStatus"
+                     size="medium"
+                     placeholder="请选择订单状态"
+                     clearable
+                     @change="getTaskList"
+                     @clear="getTaskList"
+          >
             <el-option v-for="i in Object.keys($options.taskStatus)"
                        :value="i"
                        placeholder="请选择订单状态"
-                       :label="$options.taskStatus[i]">
+                       :label="$options.taskStatus[i]"
+            >
             </el-option>
           </el-select>
         </el-col>
@@ -24,6 +34,9 @@
           产品编号
           <el-input
             size="medium"
+            clearable
+            @clear="getTaskList"
+            @keyup.enter.native="getTaskList"
             v-model="query.itemcode"
             placeholder="请填写产品编号"
           ></el-input>
@@ -34,7 +47,11 @@
           订单编号
           <el-input v-model="query.taskId"
                     size="medium"
-                    placeholder="请填订单号">
+                    clearable
+                    @clear="getTaskList"
+                    @keyup.enter.native="getTaskList"
+                    placeholder="请填订单号"
+          >
           </el-input>
         </el-col>
         <el-col :span="10">
@@ -60,11 +77,13 @@
     </div>
     <div class="task-table">
       <el-table v-loading="loading.table"
+                empty-text="暂无数据"
                 :data="list"
                 :row-key="getRowKeys"
                 :expand-row-keys="expands"
                 @expand-change="handleViewDetail"
-                border>
+                border
+      >
         <el-table-column type="expand">
           <template slot-scope="scope">
             <detail :detail="detailData" :loading="loading.detail"></detail>
@@ -78,14 +97,15 @@
         </el-table-column>
         <el-table-column prop="taskStatus" label="任务状态">
           <template slot-scope="scope">
-            {{$options.taskStatus[scope.row.taskStatus] || '未知'}}
+            {{ $options.taskStatus[scope.row.taskStatus] || '未知' }}
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="发布时间"></el-table-column>
         <el-table-column label="操作">
           <template slot-scope="scope">
-            <el-button v-if="scope.row.taskStatus == 2101" type="primary" size="mini" class="operation"
-                       @click="handleReceive(scope.row)">领取
+            <el-button v-if="scope.row.taskStatus == 101" type="primary" size="mini" class="operation"
+                       @click="handleReceive(scope.row)"
+            >领取
             </el-button>
             <el-button v-else type="success" size="mini" class="operation" @click="handleChangeTask(scope.row)">状态变更
             </el-button>
@@ -106,10 +126,13 @@
       title="任务状态变更"
       :before-close="handleClose"
       :visible.sync="dialogVisible"
-      width="40%">
+      width="40%"
+    >
       <div class="dialog-status-block">
-        <el-form class="dialog-status-form" :model="task" label-position="left" label-width="120px">
-          <el-form-item label="任务变更状态">
+        <el-form ref="taskForm" class="dialog-status-form" :model="task" :rules="rules" label-position="left"
+                 label-width="120px"
+        >
+          <el-form-item label="任务变更状态" prop="taskStatus">
             <el-select v-model="task.taskStatus">
               <el-option v-for="key in Object.keys($options.taskStatus)"
                          :value="key"
@@ -118,7 +141,7 @@
               ></el-option>
             </el-select>
           </el-form-item>
-          <el-form-item label="平台买手订单号">
+          <el-form-item label="平台买手订单号" prop="buyerOrderNo">
             <el-input v-model="task.buyerOrderNo"></el-input>
           </el-form-item>
           <el-form-item label="平台买手ID">
@@ -128,7 +151,7 @@
             <el-input type="textarea" v-model="task.remark"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleChangeStatus" :loading="loading.status">更改</el-button>
+            <el-button type="primary" @click="handleChangeStatus" :loading="loading.status">变更</el-button>
             <el-button @click="handleClose">取消</el-button>
           </el-form-item>
         </el-form>
@@ -173,8 +196,8 @@ export default {
       activeRow: {},
       pickerOptions: {
         onPick: ({ maxDate, minDate }) => {
-          this.query.beginTime = new Date(minDate).getTime()
-          this.query.endTime = new Date(maxDate).getTime()
+          this.query.beginTime = minDate
+          this.query.endTime = maxDate
         }
       },
       list: [],
@@ -187,16 +210,32 @@ export default {
       loading: {
         table: false,
         detail: false,
-        status: false
+        status: false,
+        receive: false
       },
-      dialogVisible: false
+      dialogVisible: false,
+      rules: {
+        buyerOrderNo: [
+          {
+            required: true,
+            trigger: 'blur',
+            message: '请输入平台买手订单号'
+          }
+        ],
+        taskStatus: [
+          {
+            required: true,
+            trigger: 'blur',
+            message: '请选择变更状态'
+          }
+        ]
+      }
     }
   },
   methods: {
     getTaskList() {
       this.loading.table = true
       taskList(this.query).then(res => {
-        console.log('===res', res)
         this.list = res.data || []
         this.total = res.count || 0
       }).finally(_ => {
@@ -234,8 +273,12 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(() => {
-        receiveTask(item.taskId)
+      }).then(async() => {
+        this.loading.receive = true
+        await receiveTask(item.taskId)
+        this.$message.success('领取任务成功')
+        this.getTaskList()
+        this.loading.receive = false
       })
     },
     timeChange(val) {
@@ -243,6 +286,7 @@ export default {
         this.query.beginTime = ''
         this.query.endTime = ''
       }
+      this.getTaskList()
     },
     handleChangeTask(row) {
       this.dialogVisible = true
@@ -260,17 +304,22 @@ export default {
       }
     },
     handleChangeStatus() {
-      this.loading.status = true
-      let params = Object.assign({}, this.task)
-      params.taskId = this.activeRow.taskId
-      params.taskStatus = Number(params.taskStatus)
-      changeTaskStatus(params).then(res => {
-        this.$message.success('任务状态变更成功')
-        this.handleClose()
-        this.getTaskList()
-      }).finally(_ => {
-        this.loading.status = false
+      this.$refs.taskForm.validate(async(valid) => {
+        if (valid) {
+          this.loading.status = true
+          let params = Object.assign({}, this.task)
+          params.taskId = this.activeRow.taskId
+          params.taskStatus = Number(params.taskStatus)
+          changeTaskStatus(params).then(res => {
+            this.$message.success('任务状态变更成功')
+            this.handleClose()
+            this.getTaskList()
+          }).finally(_ => {
+            this.loading.status = false
+          })
+        }
       })
+
     }
   },
   mounted() {
@@ -283,15 +332,19 @@ export default {
 <style lang="scss" scoped>
 .task-wrapper {
   padding: 20px 20px;
+
   .task-search {
     color: #2c3e50;
     font-size: 14px;
+
     .search-item {
       margin-bottom: 20px;
+
       .el-input, .el-select {
         width: 260px;
         height: 36px;
       }
+
       .el-button {
         width: 120px;
         border-radius: 2px;
@@ -299,6 +352,7 @@ export default {
       }
     }
   }
+
   .getTaskList {
     float: right;
   }

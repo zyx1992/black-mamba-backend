@@ -5,7 +5,7 @@ import { getAccessToken } from '@/utils/accessToken'
 const $http = {}
 
 // 不需要bearer的请求path
-const whitePath = ['/common/lander', '/common/sign']
+const whitePath = ['/common/lander', '/common/sign', '/receiver/register']
 $http.get = (url = '', params = {}, config = {}) => {
   let headers = {}
   if (whitePath.indexOf(url) < 0) {
@@ -28,7 +28,7 @@ $http.get = (url = '', params = {}, config = {}) => {
 }
 
 $http.post = (url = '', params = {}, config = {}) => {
-  let headers = {}
+  const headers = {}
   if (whitePath.indexOf(url) < 0) {
     headers['Authorization'] = `Bearer ${getAccessToken('access_token')}`
   }

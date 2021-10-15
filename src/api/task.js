@@ -13,6 +13,5 @@ export function changeTaskStatus(params) {
 }
 
 export function receiveTask(id) {
-  console.log('==id', id, typeof id)
   return $http.post(`/receiver-task/${id}`)
 }

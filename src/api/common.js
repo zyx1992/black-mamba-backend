@@ -11,3 +11,7 @@ export function getUserRsa(params) {
 export function singin(params) {
   return $http.post('/common/lander', params)
 }
+
+export function signup(params) {
+  return $http.post('/receiver/register', params)
+}

@@ -1,7 +1,8 @@
 <template>
   <div class="login-container">
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on"
-             label-position="left">
+             label-position="left"
+    >
 
       <div class="title-container">
         <h3 class="title">Login Form</h3>
@@ -43,14 +44,16 @@
       </el-form-item>
 
       <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;"
-                 @click.native.prevent="handleLogin">Login
+                 @click.native.prevent="handleLogin"
+      >Login
       </el-button>
+      <el-button @click="handleReg">注册</el-button>
     </el-form>
   </div>
 </template>
 
 <script>
-import { getUserRsa, singin } from '@/api/common'
+import { getUserRsa, signup, singin } from '@/api/common'
 import { handleRsaPassword } from '@/utils/index'
 import { setAccessToken } from '@/utils/accessToken'
 
@@ -105,14 +108,15 @@ export default {
       this.$refs.loginForm.validate(async valid => {
         if (valid) {
           this.loading = true
-          let params = Object.assign({}, this.loginForm)
-          let { signKey } = await getUserRsa({ username: this.loginForm.username })
+          const params = Object.assign({}, this.loginForm)
+          const { data: { signKey } } = await getUserRsa({ username: this.loginForm.username })
+          console.log('===signKey', signKey)
           params.password = encodeURIComponent(
             handleRsaPassword(signKey, params.password)
           )
           singin(params)
             .then((data) => {
-              let res = data.data || {}
+              const res = data.data || {}
               this.$store.dispatch(
                 'user/getAccessToken',
                 res['access_token']
@@ -128,6 +132,20 @@ export default {
           console.log('error submit!!')
           return false
         }
+      })
+    },
+    async handleReg() {
+      const { data: { signKey }} = await getUserRsa({ username: this.loginForm.username })
+      const password = encodeURIComponent(
+        handleRsaPassword(signKey, this.loginForm.password)
+      )
+      const param = {
+        username: this.loginForm.username,
+        password: password,
+        userType: '1'
+      }
+      signup(param).then((data) => {
+        console.log('==data', data)
       })
     }
   }

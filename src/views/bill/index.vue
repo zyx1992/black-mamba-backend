@@ -4,10 +4,13 @@
       <el-row class="search-item">
         <el-col :span="7">
           充值状态&nbsp;
-          <el-select v-model="query.isConfirm">
+          <el-select v-model="query.isConfirm"
+                     clearable
+                     @clear="getList"
+                     placeholder="请选择充值状态"
+                     @change="getList">
             <el-option v-for="i in Object.keys($options.confirmStatus)"
                        :label="i"
-                       placeholder="请选择充值状态"
                        :value="$options.confirmStatus[i]">
             </el-option>
           </el-select>
@@ -17,6 +20,9 @@
           <el-input
             v-model="query.paymentAccount"
             size="medium"
+            clearable
+            @clear="getList"
+            @keyup.enter.native="getList"
             placeholder="请填写付款账号"
           ></el-input>
         </el-col>
@@ -25,6 +31,9 @@
           <el-input
             v-model="query.paymentOrderNo"
             size="medium"
+            @keyup.enter.native="getList"
+            clearable
+            @clear="getList"
             placeholder="请填写付款订单号"
           ></el-input>
         </el-col>
@@ -59,6 +68,7 @@
                 拒绝
               </el-button>
             </div>
+            <div v-else>-</div>
           </template>
         </el-table-column>
       </el-table>
@@ -131,9 +141,11 @@ export default {
     },
     handleSizeChange(val) {
       this.query.limit = val
+      this.getList()
     },
     handleCurrentChange(val) {
       this.query.page = val
+      this.getList()
     }
   },
   filters: {
